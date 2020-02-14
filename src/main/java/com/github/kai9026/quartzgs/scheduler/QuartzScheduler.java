@@ -5,8 +5,10 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 import java.io.IOException;
+import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 
 import com.github.kai9026.quartzgs.job.TestJob;
 import com.github.kai9026.quartzgs.scheduler.config.AutoWiringSpringBeanJobFactory;
@@ -14,6 +16,7 @@ import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.quartz.QuartzProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +32,11 @@ public class QuartzScheduler {
     @Autowired
     private ApplicationContext applicationContext;
 
-    @PostConstruct
-    public void init() {
-    }
+    @Autowired
+    private QuartzProperties quartzProperties;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Bean
     public SpringBeanJobFactory springBeanJobFactory() {
@@ -56,6 +61,12 @@ public class QuartzScheduler {
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean() throws IOException {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
+
+        Properties properties = new Properties();
+        properties.putAll(quartzProperties.getProperties());
+
+        factory.setDataSource(dataSource);
+        factory.setQuartzProperties(properties);
         factory.setJobFactory(springBeanJobFactory());
         return factory;
     }
